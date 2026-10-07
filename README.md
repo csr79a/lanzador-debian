@@ -1,68 +1,73 @@
 # Lanzador Debian
 
-Una sola interfaz para configurar **Debian Testing** y **Debian Sid**, con las
+Una sola aplicación para configurar **Debian Testing** y **Debian Sid**, con las
 acciones de cada distribución separadas.
 
-> **Estado: Fase 5 (pruebas y paridad).** Este repositorio se está construyendo
-> por fases. El detalle de pruebas está en [`PRUEBAS.md`](PRUEBAS.md). La
-> documentación completa (`MANUAL.md`) llegará en la fase de documentación.
-
-## Qué es
-
-Panel gráfico (PyQt6) tipo centro de aplicaciones: barra lateral con buscador y
-secciones, tarjetas de acciones con estado, y una consola integrada donde se
-responden las preguntas y la contraseña de `sudo`.
-
-El lanzador **no duplica** la lógica de instalación: clona o actualiza el
-repositorio de cada acción (`git pull --ff-only`) y ejecuta su script tal cual.
-
-## Estado por fases
-
-- **Fase 1 — Esqueleto:** motor unificado partiendo de la base de Testing, con
-  `requiere_sudo` portado de Sid y `apt_update` conservado. Rutas de datos y
-  `.desktop` ya usan `lanzador-debian`.
-- **Fase 2 — Configuración externa:** las acciones viven en
-  `config/comunes.json`, `config/testing.json` y `config/sid.json`. El lanzador
-  fusiona comunes + distro (con overrides).
-- **Fase 3 — Selector Testing/Sid:** la misma ventana permite elegir Testing o
-  Sid; al cambiar se recargan las acciones sin abrir otro programa. La elección
-  se recuerda con `QSettings` y la detección del sistema solo fija el valor
-  inicial.
-- **Fase 4 — Datos, `.desktop` e instalador unificados:** todo el estado va a
-  `~/.local/share/lanzador-debian/`; `instalar-lanzador.sh` valida
-  dependencias, archivos y JSON, y crea el `.desktop` «Lanzador Debian».
-- **Fase 5 — Pruebas y paridad (actual):** comprobaciones automáticas y
-  checklist en [`PRUEBAS.md`](PRUEBAS.md). Las pruebas que ejecutan scripts
-  quedan pendientes en Debian Testing y Sid reales.
-- Fase 6 — Documentación unificada.
+La interfaz es común (tipo centro de aplicaciones): barra lateral con buscador y
+secciones, tarjetas de acciones con estado y una consola integrada donde se
+responden las preguntas y la contraseña de `sudo`. El lanzador no duplica la
+lógica de instalación: clona o actualiza el repositorio de cada acción
+(`git pull --ff-only`) y ejecuta su script tal cual.
 
 ## Requisitos
 
-- Debian Testing o Debian Sid.
-- `python3-pyqt6` y `git`.
+- Debian Testing o Debian Sid (o derivado basado en APT).
+- `python3`, `python3-pyqt6` y `git`.
 - `sudo` configurado para tu usuario.
 - `konsole` (opcional; solo para scripts con menús o modo terminal).
 
-## Uso
+```bash
+sudo apt install python3 python3-pyqt6 git
+```
+
+## Instalación
 
 ```bash
-sudo apt install python3-pyqt6 git
 git clone https://github.com/csr79a/lanzador-debian.git ~/lanzador-debian
 cd ~/lanzador-debian
 bash instalar-lanzador.sh
 ```
 
-O directamente:
+El instalador comprueba dependencias, valida la configuración y crea el
+`.desktop` `lanzador-debian.desktop` («Lanzador Debian»). Es idempotente.
+
+Después, busca **Lanzador Debian** en el menú o ábrelo con:
 
 ```bash
 python3 ~/lanzador-debian/lanzador.py
 ```
 
-El lanzador se inicia como **usuario normal** y se niega a arrancar como root.
+Se inicia como **usuario normal** y se niega a arrancar como root.
+
+## Selector Testing / Sid
+
+En la barra lateral, el bloque **DISTRIBUCIÓN** permite elegir **Testing** o
+**Sid**. Al cambiar, se recargan las acciones en la misma ventana (no se abre
+otro programa).
+
+- **Detección automática:** lee `/etc/debian_version` y `/etc/os-release` para
+  fijar la selección inicial. Es solo informativa y **no** bloquea el cambio
+  manual. En un equipo no-Debian o Debian estable no detecta nada y se abre
+  Testing.
+- **Persistencia:** la última distribución elegida se guarda con `QSettings`.
+  Precedencia al arrancar: **última guardada > detectada > Testing**.
+
+## Acciones
+
+- **Debian Testing:** 13 acciones (Base, Gaming, Rendimiento, Gráficos NVIDIA,
+  Hardware ASUS, Terminal).
+- **Debian Sid:** 13 acciones (las de Testing adaptadas a Sid + **Firma
+  electrónica → Instalar AutoFirma** en modo `gui`).
+- **Compartidas** (definidas una vez en `config/comunes.json`): sched-ext
+  (instalar/gestor GUI/desinstalar), NVIDIA, asusctl (instalar/desinstalar) y
+  Starship.
+
+El detalle de cada acción, los modos de ejecución, `sudo`, whiptail, logs y la
+solución de problemas están en [`MANUAL.md`](MANUAL.md).
 
 ## Configuración
 
-Las acciones no están en el código: viven en `config/`.
+Las acciones viven en `config/`, no en el código:
 
 ```text
 config/
@@ -72,26 +77,45 @@ config/
 ```
 
 Reglas de fusión: `comunes.json` + `<distro>.json` → `overrides` por `id` →
-quitar lo listado en `deshabilitar`. El resultado se ordena según
-`orden_secciones` y, dentro de cada sección, por orden de aparición.
-
-Campos por acción: `id`, `seccion`, `titulo`, `descripcion`, `repo`, `rama`,
-`script`, `modo` (`auto`/`integrado`/`gui`/`terminal`), `apt_update`,
-`requiere_sudo`, `peligroso`.
-
-## Distribución
-
-En la barra lateral, el bloque **DISTRIBUCIÓN** permite elegir **Testing** o
-**Sid**; al cambiar se recargan las acciones en la misma ventana. La última
-elección se guarda con `QSettings` (precedencia: última guardada > detectada >
-Testing). La detección del sistema (`/etc/debian_version`, `/etc/os-release`)
-solo decide la selección inicial y **no** impide cambiar manualmente.
+quitar lo de `deshabilitar`. Campos por acción: `id`, `seccion`, `titulo`,
+`descripcion`, `repo`, `rama`, `script`, `modo`, `apt_update`, `requiere_sudo`,
+`peligroso`.
 
 ## Dónde se guardan los datos
 
 Todo el estado va a `~/.local/share/lanzador-debian/`:
 
-- `proyectos/<repo>/`: cada acción clona ahí su repositorio.
+- `proyectos/<repo>/`: clones de cada acción.
 - `shims/whiptail`: el `whiptail` de texto (se regenera solo).
 - `logs/`: salida de las acciones en modo `gui`.
 
+La configuración elegida (Testing/Sid) se guarda en `~/.config/lanzador-debian/`.
+
+## Pruebas
+
+- **Automatizadas:** completadas (esquema de configuración, paridad 1:1 frente a
+  los lanzadores antiguos, construcción de comandos por modo, shim, instalador y
+  selector). Detalle en [`PRUEBAS.md`](PRUEBAS.md) y en el manual.
+
+  ```bash
+  python3 ~/lanzador-debian/tests/verificar-config.py
+  ```
+
+- **Reales en Debian Testing y Debian Sid: PENDIENTES.** No se han ejecutado
+  todavía. Requieren una máquina Debian real (idealmente VM o instantánea) y
+  están documentadas como pendientes en [`PRUEBAS.md`](PRUEBAS.md) §2.
+
+## Documentación
+
+- [`MANUAL.md`](MANUAL.md) — manual completo: instalación, selector, detección,
+  persistencia, acciones, modos, sudo, terminal, whiptail, logs, solución de
+  problemas y pruebas.
+- [`PRUEBAS.md`](PRUEBAS.md) — comprobaciones automáticas, plan de pruebas
+  manuales y checklist de paridad.
+
+## Seguridad
+
+El lanzador ejecuta lo que haya en la rama por defecto del repo de cada acción;
+los scripts pueden usar `sudo` y modificar el sistema. Protege tu cuenta de
+GitHub con verificación en dos pasos y revisa los cambios antes de ejecutarlos.
+La contraseña de `sudo` no se guarda ni se registra.
