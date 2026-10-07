@@ -1,104 +1,79 @@
 {
+  "version": 1,
   "carpeta_proyectos": "~/.local/share/lanzador-debian/proyectos",
+  "descripcion": "Configuración común. 'acciones' son las compartidas por Debian Testing y Debian Sid; cada distro puede sobrescribir campos por 'id' y ordenar secciones con 'orden_secciones'.",
   "acciones": [
     {
-      "seccion": "Base",
-      "titulo": "Corregir repositorios Debian Testing",
-      "descripcion": "Configura los repositorios oficiales de Debian Testing usando el formato moderno deb822.",
-      "repo": "https://github.com/csr79a/debian-testing-setup.git",
-      "script": "repos/corregir-repos-testing.sh"
-    },
-    {
-      "seccion": "Base",
-      "titulo": "Configurar Debian Testing",
-      "descripcion": "Setup inicial del sistema.",
-      "repo": "https://github.com/csr79a/debian-testing-setup.git",
-      "script": "setup/setup-debian-testing.sh"
-    },
-    {
-      "seccion": "Base",
-      "titulo": "Limpiar Debian Testing",
-      "descripcion": "Revierte parte de la configuración base.",
-      "repo": "https://github.com/csr79a/debian-testing-setup.git",
-      "script": "cleanup/cleanup-debian-testing.sh",
-      "peligroso": true
-    },
-    {
-      "seccion": "Base",
-      "titulo": "Sincronizar repositorios APT",
-      "descripcion": "Actualiza la información de los paquetes disponibles en los repositorios configurados (apt update).",
-      "repo": "https://github.com/csr79a/debian-testing-setup.git",
-      "script": "repos/apt-update.sh"
-    },
-    {
-      "seccion": "Gaming",
-      "titulo": "Instalar gaming",
-      "descripcion": "Steam, ProtonPlus, Heroic, GameMode, MangoHud y ntsync.",
-      "repo": "https://github.com/csr79a/gaming-debian-testing.git",
-      "script": "setup-gaming-debian-testing.sh",
-      "apt_update": true
-    },
-    {
-      "seccion": "Gaming",
-      "titulo": "Limpiar gaming",
-      "descripcion": "Elimina lo instalado por el script de gaming.",
-      "repo": "https://github.com/csr79a/gaming-debian-testing.git",
-      "script": "cleanup-gaming-debian-testing.sh",
-      "peligroso": true
-    },
-    {
+      "id": "sched-ext-instalar",
       "seccion": "Rendimiento",
       "titulo": "Instalar sched-ext",
       "descripcion": "Compila e instala los schedulers scx y sus herramientas.",
       "repo": "https://github.com/csr79a/sched-ext-debian.git",
+      "rama": null,
       "script": "setup-sched-ext-debian.sh",
-      "apt_update": true
+      "modo": "auto"
     },
     {
+      "id": "sched-ext-gui",
       "seccion": "Rendimiento",
       "titulo": "Instalar gestor de sched-ext (GUI)",
       "descripcion": "App gráfica para elegir el scheduler sin terminal. Necesita sched-ext ya instalado.",
       "repo": "https://github.com/csr79a/sched-ext-debian.git",
-      "script": "scx-manager-gui/install-scx-manager-gui.sh"
+      "rama": null,
+      "script": "scx-manager-gui/install-scx-manager-gui.sh",
+      "modo": "auto"
     },
     {
+      "id": "sched-ext-desinstalar",
       "seccion": "Rendimiento",
       "titulo": "Desinstalar sched-ext",
       "descripcion": "Quita sched-ext y sus herramientas.",
       "repo": "https://github.com/csr79a/sched-ext-debian.git",
+      "rama": null,
       "script": "uninstall-sched-ext-debian.sh",
+      "modo": "auto",
       "peligroso": true
     },
     {
+      "id": "nvidia-instalar",
       "seccion": "Gráficos NVIDIA",
       "titulo": "Instalar driver NVIDIA",
       "descripcion": "Driver nvidia-open, GRUB para KMS y comprobación de Secure Boot.",
       "repo": "https://github.com/csr79a/nvidia-debian-setup.git",
+      "rama": null,
       "script": "setup-nvidia-debian.sh",
-      "apt_update": true
+      "modo": "auto"
     },
     {
+      "id": "asus-instalar",
       "seccion": "Hardware ASUS",
       "titulo": "Instalar asusctl / ROG Control",
       "descripcion": "Compila e instala asusctl y ROG Control.",
       "repo": "https://github.com/csr79a/asusctl-rogcontrol-debian.git",
+      "rama": null,
       "script": "setup-asusctl-rogcontrol.sh",
-      "apt_update": true
+      "modo": "auto"
     },
     {
+      "id": "asus-desinstalar",
       "seccion": "Hardware ASUS",
       "titulo": "Desinstalar asusctl / ROG Control",
       "descripcion": "Quita asusctl y ROG Control.",
       "repo": "https://github.com/csr79a/asusctl-rogcontrol-debian.git",
+      "rama": null,
       "script": "uninstall-asusctl-rogcontrol.sh",
+      "modo": "auto",
       "peligroso": true
     },
     {
+      "id": "starship",
       "seccion": "Terminal",
       "titulo": "Configurar terminal con Starship",
       "descripcion": "Versión para Debian.",
       "repo": "https://github.com/csr79a/terminal-starship-setup.git",
-      "script": "setup-terminal-starship-debian.sh"
+      "rama": null,
+      "script": "setup-terminal-starship-debian.sh",
+      "modo": "auto"
     }
   ]
 }

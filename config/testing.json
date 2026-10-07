@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "distro": "testing",
+  "nombre": "Debian Testing",
+  "orden_secciones": ["Base", "Gaming", "Rendimiento", "Gráficos NVIDIA", "Hardware ASUS", "Terminal"],
+  "acciones": [
+    {
+      "id": "testing-corregir-repos",
+      "seccion": "Base",
+      "titulo": "Corregir repositorios Debian Testing",
+      "descripcion": "Configura los repositorios oficiales de Debian Testing usando el formato moderno deb822.",
+      "repo": "https://github.com/csr79a/debian-testing-setup.git",
+      "rama": null,
+      "script": "repos/corregir-repos-testing.sh",
+      "modo": "auto"
+    },
+    {
+      "id": "testing-configurar",
+      "seccion": "Base",
+      "titulo": "Configurar Debian Testing",
+      "descripcion": "Setup inicial del sistema.",
+      "repo": "https://github.com/csr79a/debian-testing-setup.git",
+      "rama": null,
+      "script": "setup/setup-debian-testing.sh",
+      "modo": "auto"
+    },
+    {
+      "id": "testing-limpiar",
+      "seccion": "Base",
+      "titulo": "Limpiar Debian Testing",
+      "descripcion": "Revierte parte de la configuración base.",
+      "repo": "https://github.com/csr79a/debian-testing-setup.git",
+      "rama": null,
+      "script": "cleanup/cleanup-debian-testing.sh",
+      "modo": "auto",
+      "peligroso": true
+    },
+    {
+      "id": "testing-apt-update",
+      "seccion": "Base",
+      "titulo": "Sincronizar repositorios APT",
+      "descripcion": "Actualiza la información de los paquetes disponibles en los repositorios configurados (apt update).",
+      "repo": "https://github.com/csr79a/debian-testing-setup.git",
+      "rama": null,
+      "script": "repos/apt-update.sh",
+      "modo": "auto"
+    },
+    {
+      "id": "testing-gaming-instalar",
+      "seccion": "Gaming",
+      "titulo": "Instalar gaming",
+      "descripcion": "Steam, ProtonPlus, Heroic, GameMode, MangoHud y ntsync.",
+      "repo": "https://github.com/csr79a/gaming-debian-testing.git",
+      "rama": null,
+      "script": "setup-gaming-debian-testing.sh",
+      "modo": "auto",
+      "apt_update": true
+    },
+    {
+      "id": "testing-gaming-limpiar",
+      "seccion": "Gaming",
+      "titulo": "Limpiar gaming",
+      "descripcion": "Elimina lo instalado por el script de gaming.",
+      "repo": "https://github.com/csr79a/gaming-debian-testing.git",
+      "rama": null,
+      "script": "cleanup-gaming-debian-testing.sh",
+      "modo": "auto",
+      "peligroso": true
+    }
+  ],
+  "overrides": {
+    "sched-ext-instalar": {"apt_update": true},
+    "nvidia-instalar": {"apt_update": true},
+    "asus-instalar": {"apt_update": true}
+  },
+  "deshabilitar": []
+}

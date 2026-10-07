@@ -3,9 +3,9 @@
 Una sola interfaz para configurar **Debian Testing** y **Debian Sid**, con las
 acciones de cada distribución separadas.
 
-> **Estado: Fase 1 (esqueleto).** Este repositorio se está construyendo por
-> fases. La documentación completa (`MANUAL.md`) llegará en la fase de
-> documentación.
+> **Estado: Fase 2 (configuración externa).** Este repositorio se está
+> construyendo por fases. La documentación completa (`MANUAL.md`) llegará en la
+> fase de documentación.
 
 ## Qué es
 
@@ -18,11 +18,13 @@ repositorio de cada acción (`git pull --ff-only`) y ejecuta su script tal cual.
 
 ## Estado por fases
 
-- **Fase 1 — Esqueleto (actual):** motor unificado partiendo de la base de
-  Testing, con `requiere_sudo` portado de Sid y `apt_update` conservado. Rutas
-  de datos y `.desktop` ya usan `lanzador-debian`. De momento carga las acciones
-  de Testing desde `proyectos.json`.
-- Fase 2 — Configuración externa (`config/comunes.json`, `testing.json`, `sid.json`).
+- **Fase 1 — Esqueleto:** motor unificado partiendo de la base de Testing, con
+  `requiere_sudo` portado de Sid y `apt_update` conservado. Rutas de datos y
+  `.desktop` ya usan `lanzador-debian`.
+- **Fase 2 — Configuración externa (actual):** las acciones viven en
+  `config/comunes.json`, `config/testing.json` y `config/sid.json`. El lanzador
+  fusiona comunes + distro (con overrides) y, de momento, carga Testing por
+  defecto a la espera del selector.
 - Fase 3 — Selector Testing/Sid y detección de la distribución.
 - Fase 4 — Datos, `.desktop` e instalador unificados.
 - Fase 5 — Pruebas reales y checklist de paridad.
@@ -51,3 +53,23 @@ python3 ~/lanzador-debian/lanzador.py
 ```
 
 El lanzador se inicia como **usuario normal** y se niega a arrancar como root.
+
+## Configuración
+
+Las acciones no están en el código: viven en `config/`.
+
+```text
+config/
+├── comunes.json   # ajustes globales + acciones compartidas Testing/Sid
+├── testing.json   # acciones propias de Testing + overrides
+└── sid.json       # acciones propias de Sid + overrides
+```
+
+Reglas de fusión: `comunes.json` + `<distro>.json` → `overrides` por `id` →
+quitar lo listado en `deshabilitar`. El resultado se ordena según
+`orden_secciones` y, dentro de cada sección, por orden de aparición.
+
+Campos por acción: `id`, `seccion`, `titulo`, `descripcion`, `repo`, `rama`,
+`script`, `modo` (`auto`/`integrado`/`gui`/`terminal`), `apt_update`,
+`requiere_sudo`, `peligroso`.
+

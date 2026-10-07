@@ -5,7 +5,7 @@ sistema (PyQt6).
 Cada botón clona o actualiza el repo del proyecto y ejecuta su script tal cual,
 sin modificarlo. El lanzador corre como usuario normal.
 
-Modos de ejecución (campo "modo" de cada acción en proyectos.json):
+Modos de ejecución (campo "modo" de cada acción en config/<distro>.json):
 
   auto        (por defecto) El script se ejecuta DENTRO de esta ventana, en un
               pseudo-terminal: salida con colores, preguntas (read) y contraseña
@@ -48,7 +48,9 @@ from PyQt6.QtWidgets import (QApplication, QFrame, QGraphicsDropShadowEffect,
                              QScrollArea, QSizePolicy, QStackedWidget,
                              QVBoxLayout, QWidget)
 
-CONFIG = Path(__file__).resolve().parent / "proyectos.json"
+CONFIG_DIR = Path(__file__).resolve().parent / "config"
+# La Fase 3 sustituye este valor por el selector Testing/Sid de la ventana.
+DISTRO_POR_DEFECTO = "testing"
 LOG_DIR = Path.home() / ".local/share/lanzador-debian/logs"
 MODOS = ("auto", "integrado", "gui", "terminal")
 
@@ -241,6 +243,53 @@ def rgba(hexcolor, alpha):
     """Convierte #RRGGBB a rgba(r,g,b,a); Qt no acepta el formato #RRGGBBAA."""
     c = QColor(hexcolor)
     return f"rgba({c.red()},{c.green()},{c.blue()},{alpha})"
+
+
+def _leer_json(ruta):
+    return json.loads(ruta.read_text(encoding="utf-8"))
+
+
+def cargar_acciones(distro):
+    """Fusiona config/comunes.json con config/<distro>.json.
+
+    Orden: comunes -> propias (una propia con el mismo 'id' sustituye a la
+    común) -> 'overrides' por id -> quitar 'deshabilitar'. El resultado queda
+    ordenado por 'orden_secciones' y, dentro de cada sección, por orden de
+    aparición, que es como la ventana agrupa las tarjetas.
+    """
+    comunes = _leer_json(CONFIG_DIR / "comunes.json")
+    propia = _leer_json(CONFIG_DIR / f"{distro}.json")
+
+    orden, acciones = [], {}
+    for fuente in (comunes, propia):
+        for a in fuente.get("acciones", []):
+            if a["id"] not in acciones:
+                orden.append(a["id"])
+            acciones[a["id"]] = dict(a)
+
+    for aid, cambios in propia.get("overrides", {}).items():
+        if aid in acciones:
+            acciones[aid].update(cambios)
+
+    for aid in propia.get("deshabilitar", []):
+        acciones.pop(aid, None)
+        if aid in orden:
+            orden.remove(aid)
+
+    lista = [acciones[i] for i in orden if i in acciones]
+    secciones = propia.get("orden_secciones", [])
+    indice = {s: i for i, s in enumerate(secciones)}
+    lista.sort(key=lambda a: indice.get(a["seccion"], len(secciones)))
+    return lista
+
+
+def cargar_config(distro=DISTRO_POR_DEFECTO):
+    """Devuelve la configuración lista para Launcher()."""
+    comunes = _leer_json(CONFIG_DIR / "comunes.json")
+    return {
+        "carpeta_proyectos": comunes["carpeta_proyectos"],
+        "acciones": cargar_acciones(distro),
+    }
 
 
 def entorno():
@@ -1112,11 +1161,11 @@ def main():
                              "los scripts piden sudo por sí mismos.")
         return 1
     try:
-        config = json.loads(CONFIG.read_text(encoding="utf-8"))
+        config = cargar_config(DISTRO_POR_DEFECTO)
         window = Launcher(config)
     except (OSError, ValueError, KeyError, TypeError) as err:
         QMessageBox.critical(None, "Error de configuración",
-                             f"No se pudo leer {CONFIG}:\n{err}")
+                             f"No se pudo leer la configuración ({DISTRO_POR_DEFECTO}):\n{err}")
         return 1
     window.show()
     return app.exec()

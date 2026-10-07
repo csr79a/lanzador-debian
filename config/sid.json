@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "distro": "sid",
+  "nombre": "Debian Sid",
+  "orden_secciones": ["Base", "Gaming", "Rendimiento", "Gráficos NVIDIA", "Hardware ASUS", "Terminal", "Firma electrónica"],
+  "acciones": [
+    {
+      "id": "sid-convertir",
+      "seccion": "Base",
+      "titulo": "Convertir Debian Testing a Sid",
+      "descripcion": "Cambia los repositorios oficiales de Debian Testing a Sid y prepara el sistema para la actualización.",
+      "repo": "https://github.com/csr79a/debian-sid-setup.git",
+      "rama": null,
+      "script": "setup/convertir-testing-a-sid.sh",
+      "modo": "auto",
+      "requiere_sudo": true
+    },
+    {
+      "id": "sid-configurar",
+      "seccion": "Base",
+      "titulo": "Configurar Debian Sid",
+      "descripcion": "Setup inicial del sistema.",
+      "repo": "https://github.com/csr79a/debian-sid-setup.git",
+      "rama": null,
+      "script": "setup/setup-debian-sid.sh",
+      "modo": "auto"
+    },
+    {
+      "id": "sid-limpiar",
+      "seccion": "Base",
+      "titulo": "Limpiar Debian Sid",
+      "descripcion": "Revierte parte de la configuración base.",
+      "repo": "https://github.com/csr79a/debian-sid-setup.git",
+      "rama": null,
+      "script": "cleanup/cleanup-debian-sid.sh",
+      "modo": "auto",
+      "peligroso": true
+    },
+    {
+      "id": "sid-gaming-instalar",
+      "seccion": "Gaming",
+      "titulo": "Instalar gaming",
+      "descripcion": "Steam, ProtonPlus, Heroic, GameMode, MangoHud y ntsync.",
+      "repo": "https://github.com/csr79a/setup-gaming-debian-sid.git",
+      "rama": null,
+      "script": "setup-gaming-debian-sid.sh",
+      "modo": "auto"
+    },
+    {
+      "id": "sid-gaming-limpiar",
+      "seccion": "Gaming",
+      "titulo": "Limpiar gaming",
+      "descripcion": "Elimina lo instalado por el script de gaming.",
+      "repo": "https://github.com/csr79a/setup-gaming-debian-sid.git",
+      "rama": null,
+      "script": "cleanup-gaming-debian-sid.sh",
+      "modo": "auto",
+      "peligroso": true
+    },
+    {
+      "id": "autofirma",
+      "seccion": "Firma electrónica",
+      "titulo": "Instalar AutoFirma",
+      "descripcion": "Instala y configura AutoFirma, la aplicación de firma electrónica.",
+      "repo": "https://github.com/csr79a/autofirma-debian.git",
+      "rama": null,
+      "script": "instalar_autofirma_qt.sh",
+      "modo": "gui"
+    }
+  ],
+  "overrides": {},
+  "deshabilitar": []
+}

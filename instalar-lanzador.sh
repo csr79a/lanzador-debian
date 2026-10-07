@@ -10,7 +10,7 @@ fi
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-for archivo in "$DIR/lanzador.py"; do
+for archivo in "$DIR/lanzador.py" "$DIR/config/comunes.json" "$DIR/config/testing.json" "$DIR/config/sid.json"; do
     if [[ ! -f "$archivo" ]]; then
         echo "ERROR: falta el archivo requerido: $archivo" >&2
         echo "Ejecuta este instalador desde una copia completa del repositorio." >&2
