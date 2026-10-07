@@ -37,12 +37,13 @@ import sys
 import termios
 from pathlib import Path
 
-from PyQt6.QtCore import (QEasingCurve, QEvent, QObject, QPropertyAnimation, Qt,
-                          QTimer, pyqtSignal)
+from PyQt6.QtCore import (QEasingCurve, QEvent, QObject, QPropertyAnimation,
+                          QSettings, Qt, QTimer, pyqtSignal)
 from PyQt6.QtGui import (QColor, QFontDatabase, QIcon, QTextCharFormat,
                          QTextCursor)
-from PyQt6.QtWidgets import (QApplication, QFrame, QGraphicsDropShadowEffect,
-                             QGraphicsOpacityEffect, QGridLayout, QHBoxLayout,
+from PyQt6.QtWidgets import (QApplication, QButtonGroup, QFrame,
+                             QGraphicsDropShadowEffect, QGraphicsOpacityEffect,
+                             QGridLayout, QHBoxLayout,
                              QLabel, QLineEdit, QListWidget, QListWidgetItem,
                              QMessageBox, QPlainTextEdit, QPushButton,
                              QScrollArea, QSizePolicy, QStackedWidget,
@@ -73,6 +74,13 @@ QWidget { font-size: 10.5pt; }
 QFrame#sidebar { background: palette(window); border-right: 1px solid palette(mid); }
 QLabel#brand { font-size: 15pt; font-weight: 700; }
 QLabel#brandsub { color: gray; font-size: 9pt; }
+QLabel#distrolbl { color: gray; font-size: 8.5pt; font-weight: 700; }
+QPushButton#distro { text-align: left; min-height: 34px; padding: 0 12px;
+                     border-radius: 10px; background: transparent;
+                     border: 1px solid palette(mid); color: palette(text); font-weight: 600; }
+QPushButton#distro:hover { border-color: palette(highlight); }
+QPushButton#distro:checked { background: palette(highlight);
+                             color: palette(highlighted-text); border-color: transparent; }
 QLineEdit#buscar { min-height: 34px; border-radius: 10px; padding: 0 12px;
                    border: 1px solid palette(mid); background: palette(base); }
 QLineEdit#buscar:focus { border: 2px solid palette(highlight); }
@@ -290,6 +298,41 @@ def cargar_config(distro=DISTRO_POR_DEFECTO):
         "carpeta_proyectos": comunes["carpeta_proyectos"],
         "acciones": cargar_acciones(distro),
     }
+
+
+def detectar_distro():
+    """Heurística para la selección inicial. Devuelve (clave|None, etiqueta).
+
+    Solo informa: la elección manual y la guardada siempre mandan.
+    """
+    etiqueta = "desconocido"
+    try:
+        for linea in Path("/etc/os-release").read_text(encoding="utf-8").splitlines():
+            if linea.startswith("PRETTY_NAME="):
+                etiqueta = linea.split("=", 1)[1].strip().strip('"')
+    except OSError:
+        pass
+    try:
+        dv = Path("/etc/debian_version").read_text(encoding="utf-8").strip().lower()
+    except OSError:
+        return None, etiqueta
+    if dv == "sid":
+        return "sid", etiqueta
+    if dv.endswith("/sid"):
+        return "testing", etiqueta
+    return None, etiqueta
+
+
+def distro_inicial():
+    """Precedencia: última guardada > detectada > DISTRO_POR_DEFECTO."""
+    guardada = str(QSettings("lanzador-debian", "lanzador-debian")
+                   .value("distro", "") or "")
+    if guardada in ("testing", "sid"):
+        return guardada
+    detectada, _ = detectar_distro()
+    if detectada in ("testing", "sid"):
+        return detectada
+    return DISTRO_POR_DEFECTO
 
 
 def entorno():
@@ -632,9 +675,11 @@ class TarjetaAccion(QFrame):
 
 
 class Launcher(QWidget):
-    def __init__(self, config):
+    def __init__(self, distro):
         super().__init__()
-        self.base = Path(os.path.expanduser(config["carpeta_proyectos"]))
+        self.distro = distro
+        comunes = _leer_json(CONFIG_DIR / "comunes.json")
+        self.base = Path(os.path.expanduser(comunes["carpeta_proyectos"]))
         self.ctx = None
         self.setWindowTitle("Lanzador Debian")
         self.setMinimumSize(920, 700)
@@ -648,16 +693,18 @@ class Launcher(QWidget):
         self.timer_espera.timeout.connect(self._esperando_respuesta)
 
         self.stack = QStackedWidget()
-        self.stack.addWidget(self._build_home(config))
+        self.stack.addWidget(self._build_home())
         self.stack.addWidget(self._build_run())
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.stack)
 
+        self._aplicar_distro(distro)
+
     # ---------------------------------------------------------------- inicio
 
-    def _build_home(self, config):
-        self.acciones = config["acciones"]
+    def _build_home(self):
+        self.acciones = []
         self.tarjetas = []      # [(item, TarjetaAccion), ...]
         self.visibles = []
         page = QWidget()
@@ -671,16 +718,45 @@ class Launcher(QWidget):
     def _build_sidebar(self):
         barra = QFrame()
         barra.setObjectName("sidebar")
-        barra.setFixedWidth(240)
+        barra.setFixedWidth(244)
         col = QVBoxLayout(barra)
         col.setContentsMargins(16, 20, 16, 16)
-        col.setSpacing(12)
+        col.setSpacing(10)
 
         marca = QLabel("\u25c8  Lanzador Debian")
         marca.setObjectName("brand")
         marca.setWordWrap(True)
         sub = QLabel("Debian Testing · Debian Sid")
         sub.setObjectName("brandsub")
+
+        lbl_distro = QLabel("DISTRIBUCIÓN")
+        lbl_distro.setObjectName("distrolbl")
+
+        self.grupo_distro = QButtonGroup(self)
+        self.grupo_distro.setExclusive(True)
+        self.botones_distro = {}
+        caja_distro = QVBoxLayout()
+        caja_distro.setSpacing(6)
+        for clave, nombre in (("testing", "Debian Testing"),
+                              ("sid", "Debian Sid")):
+            boton = QPushButton(f"   {nombre}")
+            boton.setObjectName("distro")
+            boton.setCheckable(True)
+            boton.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.grupo_distro.addButton(boton)
+            self.botones_distro[clave] = boton
+            boton.clicked.connect(lambda _=False, k=clave: self._aplicar_distro(k))
+            caja_distro.addWidget(boton)
+
+        detectada, etiqueta = detectar_distro()
+        self.lbl_sistema = QLabel(f"Sistema detectado: {etiqueta}")
+        self.lbl_sistema.setObjectName("pie")
+        self.lbl_sistema.setWordWrap(True)
+        coincide = {"testing": "Debian Testing", "sid": "Debian Sid"}.get(detectada)
+        self.lbl_sistema.setToolTip(
+            f"Coincide con {coincide}. Solo es el valor inicial; puedes cambiarla."
+            if coincide
+            else "Solo es un valor inicial; puedes cambiar de distribución cuando quieras.")
 
         self.buscar = QLineEdit()
         self.buscar.setObjectName("buscar")
@@ -691,11 +767,6 @@ class Launcher(QWidget):
         self.lista = QListWidget()
         self.lista.setObjectName("secciones")
         self.lista.setFrameShape(QFrame.Shape.NoFrame)
-        self.lista.addItem(self._item_seccion("Todas", "view-grid", None))
-        for nombre in self._orden_secciones():
-            tema, emoji, _ = datos_seccion(nombre)
-            self.lista.addItem(self._item_seccion(nombre, tema, emoji))
-        self.lista.setCurrentRow(0)
         self.lista.currentRowChanged.connect(self.aplicar_filtro)
 
         pie = QLabel(f"Los proyectos se guardan en {self.base}")
@@ -704,6 +775,10 @@ class Launcher(QWidget):
 
         col.addWidget(marca)
         col.addWidget(sub)
+        col.addSpacing(4)
+        col.addWidget(lbl_distro)
+        col.addLayout(caja_distro)
+        col.addWidget(self.lbl_sistema)
         col.addSpacing(6)
         col.addWidget(self.buscar)
         col.addSpacing(4)
@@ -767,11 +842,43 @@ class Launcher(QWidget):
         scroll.viewport().installEventFilter(self)
         self.scroll = scroll
         col.addWidget(scroll, 1)
-
-        for item in self.acciones:
-            self.tarjetas.append((item, TarjetaAccion(item, self.run)))
-        self.aplicar_filtro()
         return cont
+
+    def _aplicar_distro(self, distro):
+        """Carga las acciones de la distribución y repinta la ventana.
+
+        Se llama al arrancar y cada vez que se pulsa Testing o Sid. No abre
+        otra ventana: reutiliza la misma."""
+        if distro not in ("testing", "sid"):
+            distro = DISTRO_POR_DEFECTO
+        if getattr(self, "runner", None) is not None and self.runner.activo():
+            return  # no cambiar de distribución mientras corre un script
+        self.distro = distro
+        self.botones_distro[distro].setChecked(True)
+        try:
+            config = cargar_config(distro)
+        except (OSError, ValueError, KeyError) as err:
+            QMessageBox.critical(self, "Error de configuración",
+                                 f"No se pudo cargar la configuración de "
+                                 f"{distro}:\n{err}")
+            return
+        self.acciones = config["acciones"]
+        self.tarjetas = [(item, TarjetaAccion(item, self.run))
+                         for item in self.acciones]
+
+        # Reconstruir la lista de secciones de esta distribución.
+        self.lista.blockSignals(True)
+        self.lista.clear()
+        self.lista.addItem(self._item_seccion("Todas", "view-grid", None))
+        for nombre in self._orden_secciones():
+            tema, emoji, _ = datos_seccion(nombre)
+            self.lista.addItem(self._item_seccion(nombre, tema, emoji))
+        self.lista.setCurrentRow(0)
+        self.lista.blockSignals(False)
+
+        self.buscar.clear()
+        self.aplicar_filtro()
+        QSettings("lanzador-debian", "lanzador-debian").setValue("distro", distro)
 
     def _seccion_actual(self):
         fila = self.lista.currentRow()
@@ -1161,11 +1268,10 @@ def main():
                              "los scripts piden sudo por sí mismos.")
         return 1
     try:
-        config = cargar_config(DISTRO_POR_DEFECTO)
-        window = Launcher(config)
+        window = Launcher(distro_inicial())
     except (OSError, ValueError, KeyError, TypeError) as err:
         QMessageBox.critical(None, "Error de configuración",
-                             f"No se pudo leer la configuración ({DISTRO_POR_DEFECTO}):\n{err}")
+                             f"No se pudo cargar la configuración:\n{err}")
         return 1
     window.show()
     return app.exec()

@@ -3,7 +3,7 @@
 Una sola interfaz para configurar **Debian Testing** y **Debian Sid**, con las
 acciones de cada distribución separadas.
 
-> **Estado: Fase 2 (configuración externa).** Este repositorio se está
+> **Estado: Fase 3 (selector de distribución).** Este repositorio se está
 > construyendo por fases. La documentación completa (`MANUAL.md`) llegará en la
 > fase de documentación.
 
@@ -21,11 +21,13 @@ repositorio de cada acción (`git pull --ff-only`) y ejecuta su script tal cual.
 - **Fase 1 — Esqueleto:** motor unificado partiendo de la base de Testing, con
   `requiere_sudo` portado de Sid y `apt_update` conservado. Rutas de datos y
   `.desktop` ya usan `lanzador-debian`.
-- **Fase 2 — Configuración externa (actual):** las acciones viven en
+- **Fase 2 — Configuración externa:** las acciones viven en
   `config/comunes.json`, `config/testing.json` y `config/sid.json`. El lanzador
-  fusiona comunes + distro (con overrides) y, de momento, carga Testing por
-  defecto a la espera del selector.
-- Fase 3 — Selector Testing/Sid y detección de la distribución.
+  fusiona comunes + distro (con overrides).
+- **Fase 3 — Selector Testing/Sid (actual):** la misma ventana permite elegir
+  Testing o Sid; al cambiar se recargan las acciones sin abrir otro programa.
+  La elección se recuerda con `QSettings` y la detección del sistema solo fija
+  el valor inicial.
 - Fase 4 — Datos, `.desktop` e instalador unificados.
 - Fase 5 — Pruebas reales y checklist de paridad.
 - Fase 6 — Documentación unificada.
@@ -72,4 +74,12 @@ quitar lo listado en `deshabilitar`. El resultado se ordena según
 Campos por acción: `id`, `seccion`, `titulo`, `descripcion`, `repo`, `rama`,
 `script`, `modo` (`auto`/`integrado`/`gui`/`terminal`), `apt_update`,
 `requiere_sudo`, `peligroso`.
+
+## Distribución
+
+En la barra lateral, el bloque **DISTRIBUCIÓN** permite elegir **Testing** o
+**Sid**; al cambiar se recargan las acciones en la misma ventana. La última
+elección se guarda con `QSettings` (precedencia: última guardada > detectada >
+Testing). La detección del sistema (`/etc/debian_version`, `/etc/os-release`)
+solo decide la selección inicial y **no** impide cambiar manualmente.
 
