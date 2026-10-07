@@ -3,9 +3,9 @@
 Una sola interfaz para configurar **Debian Testing** y **Debian Sid**, con las
 acciones de cada distribución separadas.
 
-> **Estado: Fase 4 (datos, `.desktop` e instalador unificados).** Este
-> repositorio se está construyendo por fases. La documentación completa
-> (`MANUAL.md`) llegará en la fase de documentación.
+> **Estado: Fase 5 (pruebas y paridad).** Este repositorio se está construyendo
+> por fases. El detalle de pruebas está en [`PRUEBAS.md`](PRUEBAS.md). La
+> documentación completa (`MANUAL.md`) llegará en la fase de documentación.
 
 ## Qué es
 
@@ -28,10 +28,12 @@ repositorio de cada acción (`git pull --ff-only`) y ejecuta su script tal cual.
   Sid; al cambiar se recargan las acciones sin abrir otro programa. La elección
   se recuerda con `QSettings` y la detección del sistema solo fija el valor
   inicial.
-- **Fase 4 — Datos, `.desktop` e instalador unificados (actual):** todo el
-  estado va a `~/.local/share/lanzador-debian/`; `instalar-lanzador.sh` valida
+- **Fase 4 — Datos, `.desktop` e instalador unificados:** todo el estado va a
+  `~/.local/share/lanzador-debian/`; `instalar-lanzador.sh` valida
   dependencias, archivos y JSON, y crea el `.desktop` «Lanzador Debian».
-- Fase 5 — Pruebas reales y checklist de paridad.
+- **Fase 5 — Pruebas y paridad (actual):** comprobaciones automáticas y
+  checklist en [`PRUEBAS.md`](PRUEBAS.md). Las pruebas que ejecutan scripts
+  quedan pendientes en Debian Testing y Sid reales.
 - Fase 6 — Documentación unificada.
 
 ## Requisitos
