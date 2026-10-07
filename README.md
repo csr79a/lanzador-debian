@@ -3,9 +3,9 @@
 Una sola interfaz para configurar **Debian Testing** y **Debian Sid**, con las
 acciones de cada distribución separadas.
 
-> **Estado: Fase 3 (selector de distribución).** Este repositorio se está
-> construyendo por fases. La documentación completa (`MANUAL.md`) llegará en la
-> fase de documentación.
+> **Estado: Fase 4 (datos, `.desktop` e instalador unificados).** Este
+> repositorio se está construyendo por fases. La documentación completa
+> (`MANUAL.md`) llegará en la fase de documentación.
 
 ## Qué es
 
@@ -24,11 +24,13 @@ repositorio de cada acción (`git pull --ff-only`) y ejecuta su script tal cual.
 - **Fase 2 — Configuración externa:** las acciones viven en
   `config/comunes.json`, `config/testing.json` y `config/sid.json`. El lanzador
   fusiona comunes + distro (con overrides).
-- **Fase 3 — Selector Testing/Sid (actual):** la misma ventana permite elegir
-  Testing o Sid; al cambiar se recargan las acciones sin abrir otro programa.
-  La elección se recuerda con `QSettings` y la detección del sistema solo fija
-  el valor inicial.
-- Fase 4 — Datos, `.desktop` e instalador unificados.
+- **Fase 3 — Selector Testing/Sid:** la misma ventana permite elegir Testing o
+  Sid; al cambiar se recargan las acciones sin abrir otro programa. La elección
+  se recuerda con `QSettings` y la detección del sistema solo fija el valor
+  inicial.
+- **Fase 4 — Datos, `.desktop` e instalador unificados (actual):** todo el
+  estado va a `~/.local/share/lanzador-debian/`; `instalar-lanzador.sh` valida
+  dependencias, archivos y JSON, y crea el `.desktop` «Lanzador Debian».
 - Fase 5 — Pruebas reales y checklist de paridad.
 - Fase 6 — Documentación unificada.
 
@@ -82,4 +84,12 @@ En la barra lateral, el bloque **DISTRIBUCIÓN** permite elegir **Testing** o
 elección se guarda con `QSettings` (precedencia: última guardada > detectada >
 Testing). La detección del sistema (`/etc/debian_version`, `/etc/os-release`)
 solo decide la selección inicial y **no** impide cambiar manualmente.
+
+## Dónde se guardan los datos
+
+Todo el estado va a `~/.local/share/lanzador-debian/`:
+
+- `proyectos/<repo>/`: cada acción clona ahí su repositorio.
+- `shims/whiptail`: el `whiptail` de texto (se regenera solo).
+- `logs/`: salida de las acciones en modo `gui`.
 
